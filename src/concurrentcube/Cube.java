@@ -1,5 +1,7 @@
 package concurrentcube;
 
+import tools.ColorPrinter;
+
 import java.util.Arrays;
 import java.util.concurrent.Semaphore;
 import java.util.function.BiConsumer;
@@ -8,10 +10,10 @@ public class Cube {
     private final int size;
     volatile private int[][][] cube;
 
-    private Semaphore ochrona = new Semaphore(1);
-    private Semaphore reprezentanci = new Semaphore(0); // jesli nie mozemy wejsc, to sie na nim ustawiamy
+    private Semaphore ochrona = new Semaphore(1, true);
+    private Semaphore reprezentanci = new Semaphore(0, true); // jesli nie mozemy wejsc, to sie na nim ustawiamy
     private Semaphore[] pozostali = new Semaphore[4]; //binary_semaphore pozostali[N] = {0, ..., 0};
-    private Semaphore doWyjscia = new Semaphore(0);
+    private Semaphore doWyjscia = new Semaphore(0, true);
     private volatile int ileDoWyjscia = 0;
     private volatile int ileReprezentantow = 0;
     private volatile int[] ileZGrupy = new int[4]; //{0, ..., 0};
@@ -40,15 +42,15 @@ public class Cube {
     }
 
     void initSemaphores() {
-        pozostali[0] = new Semaphore(0);
-        pozostali[1] = new Semaphore(0);
-        pozostali[2] = new Semaphore(0);
-        pozostali[3] = new Semaphore(0);
+        pozostali[0] = new Semaphore(0, true);
+        pozostali[1] = new Semaphore(0, true);
+        pozostali[2] = new Semaphore(0, true);
+        pozostali[3] = new Semaphore(0, true);
 
         layers = new Semaphore[size];
 
         for (int i = 0; i < size; i++) {
-            layers[i] = new Semaphore(0);
+            layers[i] = new Semaphore(1, true);
         }
     }
 
@@ -334,13 +336,19 @@ public class Cube {
         }
     }
 
-    public void rotate(int side, int layer) throws InterruptedException {
-        int id = getGroup(side);
-        entryProtocol(id);
+    public void rotate(int side, int layer) {
 
-        rotation(side, layer);
+        try {
+            int id = getGroup(side);
+            entryProtocol(id);
 
-        exitProtocol(id);
+            rotation(side, layer);
+
+            exitProtocol(id);
+        }
+        catch (InterruptedException e) {
+            System.out.println("sfdghbfdsjghshkjg");
+        }
     }
 
 //    Semaphore[] layers = new Semaphore[size];
@@ -350,29 +358,31 @@ public class Cube {
     private void rotation(int side, int layer) throws InterruptedException {
         int layerId = side > 2 ? opositeLayer(layer) : layer; // jeśli side = 3, 4, 5 to liczymy je jak scianki 0,1,2
 
-        ochrona.acquire();
-        if (isLayerRotating[layerId]) {
-            layersWaitingToTurn[layerId]++;
-            ochrona.release();
-            layers[layerId].acquire(); // diedzicczenie ochrony
-            isLayerRotating[layerId] = true;
-        }
-        ochrona.release();
+//        ochrona.acquire();
+//        if (isLayerRotating[layerId]) {
+//            layersWaitingToTurn[layerId]++;
+//            ochrona.release();
+//            layers[layerId].acquire(); // diedzicczenie ochrony
+//            isLayerRotating[layerId] = true;
+//        }
+//        ochrona.release();
+        layers[layerId].acquire();
 
         beforeRotation.accept(size, layer);
         sequentialRotate(side, layer);
         afterRotation.accept(size, layer);
 
-        ochrona.acquire();
-        isLayerRotating[layerId] = false;
-
-        if (layersWaitingToTurn[layerId] > 0) {
-            layersWaitingToTurn[layerId]--;
-            layers[layerId].release();
-        }
-        else {
-            ochrona.release();
-        }
+        layers[layerId].release();
+//        ochrona.acquire();
+//        isLayerRotating[layerId] = false;
+//
+//        if (layersWaitingToTurn[layerId] > 0) {
+//            layersWaitingToTurn[layerId]--;
+//            layers[layerId].release();
+//        }
+//        else {
+//            ochrona.release();
+//        }
 
     }
 
@@ -380,7 +390,22 @@ public class Cube {
         for (int i = 0; i < 6; i++) {
             for (int y = size - 1; y >= 0 ; y--) {
                 for (int x = 0; x < size; x++) {
-                    System.out.printf("%d", cube[i][x][y]);
+//                    System.out.printf("%d", cube[i][x][y]);
+                    ColorPrinter.squareColorPrint(cube[i][x][y], cube[i][x][y]);
+                }
+                System.out.printf("\n");
+            }
+            System.out.println("");
+        }
+        System.out.println("-----------------------------");
+    }
+
+    public void printNumberedCube() {
+        for (int i = 0; i < 6; i++) {
+            for (int y = size - 1; y >= 0 ; y--) {
+                for (int x = 0; x < size; x++) {
+//                    System.out.printf("%d", cube[i][x][y]);
+                    ColorPrinter.cubeColorPrint(cube[i][x][y], cube[i][x][y]);
                 }
                 System.out.printf("\n");
             }
@@ -410,20 +435,20 @@ public class Cube {
         return bob.toString();
     }
     public static void main(String[] args) {
-        try {
+
 //        Cube cube = new Cube(3);
 //        cube.sequentialRotate(0, 2);
 //        cube.sequentialRotate(5, 0);
 //        cube.sequentialRotate(1, 1);
 //        cube.sequentialRotate(4, 1);
-            Cube cube = new Cube(4);
-            cube.sequentialRotate(2, 0);
-            cube.sequentialRotate(5, 1);
-            cube.printCube();
+        Cube cube = new Cube(4);
+        cube.sequentialRotate(2, 0);
+        cube.sequentialRotate(5, 1);
+        cube.printCube();
 
-            Cube cube2 = new Cube(4);
-            cube2.rotate(2, 0);
-            cube2.rotate(5, 1);
+        Cube cube2 = new Cube(4);
+        cube2.rotate(2, 0);
+        cube2.rotate(5, 1);
 //        Cube cube = new Cube(3);
 //
 //        cube.sequentialRotate(2, 0);
@@ -438,10 +463,7 @@ public class Cube {
 //        cube.printCube();
 //        cube.sequentialRotate(5, 0);
 
-            cube.printCube();
-        }
-        catch (InterruptedException e) {
-            System.out.println("dksjfhskljhflsk");
-        }
+        cube.printCube();
+
     }
 }
