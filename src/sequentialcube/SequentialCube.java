@@ -1,5 +1,7 @@
 package sequentialcube;
 
+import tools.ColorPrinter;
+
 import java.util.function.BiConsumer;
 
 public class SequentialCube {
@@ -47,14 +49,14 @@ public class SequentialCube {
     }
 
     private int opositeFace(int id) {
-        switch (id) {
-            case 0: return 5;
-            case 1: return 3;
-            case 2: return 4;
-            case 3: return 1;
-            case 4: return 2;
-            default: return 0;
-        }
+        return switch (id) {
+            case 0 -> 5;
+            case 1 -> 3;
+            case 2 -> 4;
+            case 3 -> 1;
+            case 4 -> 2;
+            default -> 0;
+        };
     }
 
     private int opositeLayer(int layer) {
@@ -181,23 +183,12 @@ public class SequentialCube {
 
     public void sequentialRotate(int side, int layer) {
         switch (side) {
-            case 0:
-                faceZeroTurn(layer);
-                break;
-            case 1:
-                faceOneTurn(layer);
-                break;
-            case 2:
-                faceTwoTurn(layer);
-                break;
-            case 3:
-                faceThreeTurn(layer);
-                break;
-            case 4:
-                faceFourTurn(layer);
-                break;
-            default:
-                faceFiveTurn(layer);
+            case 0 -> faceZeroTurn(layer);
+            case 1 -> faceOneTurn(layer);
+            case 2 -> faceTwoTurn(layer);
+            case 3 -> faceThreeTurn(layer);
+            case 4 -> faceFourTurn(layer);
+            default -> faceFiveTurn(layer);
         }
     }
 
@@ -205,7 +196,22 @@ public class SequentialCube {
         for (int i = 0; i < 6; i++) {
             for (int y = size - 1; y >= 0 ; y--) {
                 for (int x = 0; x < size; x++) {
-                    System.out.printf("%d", cube[i][x][y]);
+//                    System.out.printf("%d", cube[i][x][y]);
+                    ColorPrinter.squareColorPrint(cube[i][x][y], cube[i][x][y]);
+                }
+                System.out.printf("\n");
+            }
+            System.out.println("");
+        }
+        System.out.println("-----------------------------");
+    }
+
+    public void printNumberedCube() {
+        for (int i = 0; i < 6; i++) {
+            for (int y = size - 1; y >= 0 ; y--) {
+                for (int x = 0; x < size; x++) {
+//                    System.out.printf("%d", cube[i][x][y]);
+                    ColorPrinter.cubeColorPrint(cube[i][x][y], cube[i][x][y]);
                 }
                 System.out.printf("\n");
             }

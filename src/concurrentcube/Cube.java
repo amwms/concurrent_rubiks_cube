@@ -108,14 +108,14 @@ public class Cube {
     }
 
     private int opositeFace(int id) {
-        switch (id) {
-            case 0: return 5;
-            case 1: return 3;
-            case 2: return 4;
-            case 3: return 1;
-            case 4: return 2;
-            default: return 0;
-        }
+        return switch (id) {
+            case 0 -> 5;
+            case 1 -> 3;
+            case 2 -> 4;
+            case 3 -> 1;
+            case 4 -> 2;
+            default -> 0;
+        };
     }
 
     private int opositeLayer(int layer) {
@@ -242,23 +242,12 @@ public class Cube {
 
     public void sequentialRotate(int side, int layer) {
         switch (side) {
-            case 0:
-                faceZeroTurn(layer);
-                break;
-            case 1:
-                faceOneTurn(layer);
-                break;
-            case 2:
-                faceTwoTurn(layer);
-                break;
-            case 3:
-                faceThreeTurn(layer);
-                break;
-            case 4:
-                faceFourTurn(layer);
-                break;
-            default:
-                faceFiveTurn(layer);
+            case 0 -> faceZeroTurn(layer);
+            case 1 -> faceOneTurn(layer);
+            case 2 -> faceTwoTurn(layer);
+            case 3 -> faceThreeTurn(layer);
+            case 4 -> faceFourTurn(layer);
+            default -> faceFiveTurn(layer);
         }
     }
 
