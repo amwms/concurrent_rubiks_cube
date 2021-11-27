@@ -32,7 +32,7 @@ public class Cube {
     private AtomicInteger amountToExit = new AtomicInteger(0);
     private AtomicInteger amountRotating = new AtomicInteger(0);
     private AtomicInteger whoIsRotating = new AtomicInteger(-1);
-    private AtomicBoolean flag = new AtomicBoolean(false);
+//    private AtomicBoolean flag = new AtomicBoolean(false);
 
     private Semaphore[] layers;
 //    private volatile int[] layersWaitingToTurn;
@@ -317,31 +317,30 @@ public class Cube {
         }
     }
 
-    public void rotate(int side, int layer) {
+    public void rotate(int side, int layer) throws InterruptedException {
         int id = getGroup(side);
+        AtomicBoolean flag = new AtomicBoolean(false);
 
         try {
             entryProtocol(id);
         }
         catch (InterruptedException e) {
             flag.set(true);
+            throw e;
         }
+
+        // System.out.println("bede krecil: " + side + " " + layer + " " + Thread.currentThread().getName() + " flag: " + flag.get());
 
         if (!flag.get()) {
-            rotation(side, layer);
+            rotation(side, layer, flag);
         }
 
+        // System.out.println("juz nie: " + side + " " + layer + " " + Thread.currentThread().getName());
 
-        try {
-            exitProtocol(id);
-        } catch (InterruptedException e) {
-//            e.printStackTrace();
-        }
-
-        flag.set(false);
+        exitProtocol(id);
     }
 
-    private void rotation(int side, int layer) /*throws InterruptedException*/ {
+    private void rotation(int side, int layer, AtomicBoolean flag) throws InterruptedException {
         int layerId = side > 2 ? opositeLayer(layer) : layer; // jeśli side = 3, 4, 5 to liczymy je jak scianki 0,1,2
 
         try {
@@ -352,14 +351,20 @@ public class Cube {
             flag.set(true);
 
             if (amountRotating.decrementAndGet() == 0 && amountToExit.get() == 0) {
+                whoIsRotating.set(-1);
                 toEnter.signalAll();
             }
             else if (amountRotating.get() == 0 && amountToExit.get() > 0) {
+                whoIsRotating.set(-1000);
                 toExit.signalAll();
             }
 
             lock.unlock();
+
+            throw e;
         }
+
+        // System.out.println("bede krecil ale tak serio: " + side + " " + layer + " " + Thread.currentThread().getName() + " flag: " + flag.get());
 
         if (!flag.get()) {
             beforeRotation.accept(side, layer);
@@ -368,8 +373,6 @@ public class Cube {
 
             layers[layerId].release();
         }
-
-        flag.set(false);
     }
 
     public void printCube() {
@@ -425,14 +428,14 @@ public class Cube {
 //        cube.sequentialRotate(5, 0);
 //        cube.sequentialRotate(1, 1);
 //        cube.sequentialRotate(4, 1);
-        Cube cube = new Cube(4);
-        cube.sequentialRotate(2, 0);
-        cube.sequentialRotate(5, 1);
-        cube.printCube();
-
-        Cube cube2 = new Cube(4);
-        cube2.rotate(2, 0);
-        cube2.rotate(5, 1);
+//        Cube cube = new Cube(4);
+//        cube.sequentialRotate(2, 0);
+//        cube.sequentialRotate(5, 1);
+//        cube.printCube();
+//
+//        Cube cube2 = new Cube(4);
+//        cube2.rotate(2, 0);
+//        cube2.rotate(5, 1);
 //        Cube cube = new Cube(3);
 //
 //        cube.sequentialRotate(2, 0);
@@ -447,7 +450,7 @@ public class Cube {
 //        cube.printCube();
 //        cube.sequentialRotate(5, 0);
 
-        cube.printCube();
+//        cube.printCube();
 
     }
 }
