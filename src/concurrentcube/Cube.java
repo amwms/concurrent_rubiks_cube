@@ -337,6 +337,7 @@ public class Cube {
         }
         catch (InterruptedException e) {
             System.out.println("sfdghbfdsjghshkjg");
+            e.printStackTrace();
         }
     }
 
