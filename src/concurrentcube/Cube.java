@@ -4,25 +4,39 @@ import tools.ColorPrinter;
 
 import java.util.Arrays;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 
 public class Cube {
     private final int size;
     volatile private int[][][] cube;
 
-    private Semaphore ochrona = new Semaphore(1, true);
-    private Semaphore reprezentanci = new Semaphore(0, true); // jesli nie mozemy wejsc, to sie na nim ustawiamy
-    private Semaphore[] pozostali = new Semaphore[4]; //binary_semaphore pozostali[N] = {0, ..., 0};
-    private Semaphore doWyjscia = new Semaphore(0, true);
-    private volatile int ileDoWyjscia = 0;
-    private volatile int ileReprezentantow = 0;
-    private volatile int[] ileZGrupy = new int[4]; //{0, ..., 0};
-    private volatile int ktoOblicza = -1;
-    private volatile int ileOblicza = 0;
+//    private Semaphore ochrona = new Semaphore(1, true);
+//    private Semaphore reprezentanci = new Semaphore(0, true); // jesli nie mozemy wejsc, to sie na nim ustawiamy
+//    private Semaphore[] pozostali = new Semaphore[4]; //binary_semaphore pozostali[N] = {0, ..., 0};
+//    private Semaphore doWyjscia = new Semaphore(0, true);
+//    private volatile int ileDoWyjscia = 0;
+//    private volatile int ileReprezentantow = 0;
+//    private volatile int[] ileZGrupy = new int[4]; //{0, ..., 0};
+//    private volatile int ktoOblicza = -1;
+//    private volatile int ileOblicza = 0;
+    Lock lock = new ReentrantLock(true);
+    Condition toExit = lock.newCondition();
+    Condition toEnter = lock.newCondition();
+
+    private AtomicInteger amountToEnter = new AtomicInteger(0);
+    private AtomicInteger amountToExit = new AtomicInteger(0);
+    private AtomicInteger amountRotating = new AtomicInteger(0);
+    private AtomicInteger whoIsRotating = new AtomicInteger(-1);
+    private AtomicBoolean flag = new AtomicBoolean(false);
 
     private Semaphore[] layers;
-    private volatile int[] layersWaitingToTurn;
-    private volatile Boolean[] isLayerRotating;
+//    private volatile int[] layersWaitingToTurn;
+//    private volatile Boolean[] isLayerRotating;
 
     private BiConsumer<Integer, Integer> beforeRotation;
     private BiConsumer<Integer, Integer> afterRotation;
@@ -42,10 +56,10 @@ public class Cube {
     }
 
     void initSemaphores() {
-        pozostali[0] = new Semaphore(0, true);
-        pozostali[1] = new Semaphore(0, true);
-        pozostali[2] = new Semaphore(0, true);
-        pozostali[3] = new Semaphore(0, true);
+//        pozostali[0] = new Semaphore(0, true);
+//        pozostali[1] = new Semaphore(0, true);
+//        pozostali[2] = new Semaphore(0, true);
+//        pozostali[3] = new Semaphore(0, true);
 
         layers = new Semaphore[size];
 
@@ -55,18 +69,18 @@ public class Cube {
     }
 
     void initArrays() {
-        ileZGrupy[0] = 0;
-        ileZGrupy[1] = 0;
-        ileZGrupy[2] = 0;
-        ileZGrupy[3] = 0;
+//        ileZGrupy[0] = 0;
+//        ileZGrupy[1] = 0;
+//        ileZGrupy[2] = 0;
+//        ileZGrupy[3] = 0;
 
-        layersWaitingToTurn = new int[size];
-        isLayerRotating = new Boolean[size];
-
-        for (int i = 0 ; i < size; i++) {
-            layersWaitingToTurn[i] = 0;
-            isLayerRotating[i] = false;
-        }
+//        layersWaitingToTurn = new int[size];
+//        isLayerRotating = new Boolean[size];
+//
+//        for (int i = 0 ; i < size; i++) {
+//            layersWaitingToTurn[i] = 0;
+//            isLayerRotating[i] = false;
+//        }
     }
 
     public Cube(int size,
@@ -251,15 +265,6 @@ public class Cube {
         }
     }
 
-//    Semaphore ochrona = new Semaphore(1);
-//    Semaphore reprezentanci = new Semaphore(0); // jesli nie mozemy wejsc, to sie na nim ustawiamy
-//    Semaphore[] pozostali = new Semaphore[3]; //binary_semaphore pozostali[N] = {0, ..., 0};
-//    Semaphore doWyjscia = new Semaphore(0);
-//    int ileDoWyjscia = 0;
-//    int ileReprezentantow = 0;
-//    int[] ileZGrupy = new int[3]; //{0, ..., 0};
-//    int ktoOblicza = -1;
-//    int ileOblicza = 0;
 
     private int getGroup(int side) {
         if (side < 3)
@@ -270,117 +275,107 @@ public class Cube {
 
     private void entryProtocol(int id) throws InterruptedException {
         // protokół wejścia
-        ochrona.acquire(); // P(ochrona);
-        if (ktoOblicza != id && ktoOblicza != -1) { // ktoOblicza != id <- to chyba powoduje że nawet jak jakiś wątek dojdzie później to jest odrazu wykonymwany jeślio jego grupa jest w miejscu obliczania
-            ileZGrupy[id]++;
-            if (ileZGrupy[id] == 1) {
-                ileReprezentantow++;
-                ochrona.release(); // V(ochrona);
-                reprezentanci.acquire();  //P(reprezentanci); // dziedziczenie ochrony
-                ileReprezentantow--;
-                ktoOblicza = id;
-            }
-            else {
-                ochrona.release(); //V(ochrona);
-                pozostali[id].acquire(); //P(pozostali[id]); // dziedziczenie ochrony
+        try {
+            lock.lock();
+
+            while (whoIsRotating.get() != id && whoIsRotating.get() != -1) {
+                toEnter.await();
             }
 
-            ileZGrupy[id]--;
-            ileOblicza++; // chyba tak xd
-
-            if (ileZGrupy[id] > 0) {
-                pozostali[id].release(); //V(pozostali[id]); // przekazanie ochrony
-            }
-            else {
-                ochrona.release(); //V(ochrona); // jak jestesmy ostatni z grupy to musimy
-                // oddac ochrone
-            }
+            amountRotating.incrementAndGet();
+            whoIsRotating.set(id);
         }
-        else {
-            ktoOblicza = id;
-            ileOblicza++;
-            ochrona.release(); //V(ochrona);
+        finally {
+            lock.unlock();
         }
     }
 
     private void exitProtocol(int id) throws InterruptedException {
         // protokół wyjścia
-        ochrona.acquire(); //P(ochrona);
-        ileOblicza--;
-        if (ileOblicza > 0) {
-            ileDoWyjscia++;
-            ochrona.release();  //V(ochrona);
-            doWyjscia.acquire(); //P(doWyjscia); // dziedziczenie ochrony
-            ileDoWyjscia--;
+        try {
+            lock.lock();
+
+            amountRotating.decrementAndGet();
+            amountToExit.incrementAndGet();
+            while (amountRotating.get() > 0) { // while nie if
+                toExit.await();
+            }
+
+            whoIsRotating.set(-1000); // żeby przez przypadek nikt nie wszedł
+
+            toExit.signalAll();
         }
-        if (ileDoWyjscia > 0) {
-            doWyjscia.release(); //V(doWyjscia);
-        }
-        else if (ileReprezentantow > 0) { //jesteśmy ostatnim wychodzącym jeśli ileDOWyjścia = 0
-            reprezentanci.release(); //V(reprezentanci);
-        }
-        else {
-            ktoOblicza = -1;
-            ochrona.release(); //V(ochrona);
+        finally {
+            amountToExit.decrementAndGet();
+
+            if (amountToExit.get() == 0 && amountRotating.get() == 0) {
+                whoIsRotating.set(-1);
+                toEnter.signalAll();
+            }
+
+            lock.unlock();
         }
     }
 
     public void rotate(int side, int layer) {
+        int id = getGroup(side);
 
         try {
-            int id = getGroup(side);
             entryProtocol(id);
-
-            rotation(side, layer);
-
-            exitProtocol(id);
         }
         catch (InterruptedException e) {
-            System.out.println("sfdghbfdsjghshkjg");
-            e.printStackTrace();
+            flag.set(true);
         }
+
+        if (!flag.get()) {
+            rotation(side, layer);
+        }
+
+
+        try {
+            exitProtocol(id);
+        } catch (InterruptedException e) {
+//            e.printStackTrace();
+        }
+
+        flag.set(false);
     }
 
-//    Semaphore[] layers = new Semaphore[size];
-//    int[] layersWaitingToTurn = new int[size];
-//    Boolean[] isLayerRotating = new Boolean[size];
-
-    private void rotation(int side, int layer) throws InterruptedException {
+    private void rotation(int side, int layer) /*throws InterruptedException*/ {
         int layerId = side > 2 ? opositeLayer(layer) : layer; // jeśli side = 3, 4, 5 to liczymy je jak scianki 0,1,2
 
-//        ochrona.acquire();
-//        if (isLayerRotating[layerId]) {
-//            layersWaitingToTurn[layerId]++;
-//            ochrona.release();
-//            layers[layerId].acquire(); // diedzicczenie ochrony
-//            isLayerRotating[layerId] = true;
-//        }
-//        ochrona.release();
-        layers[layerId].acquire();
+        try {
+            layers[layerId].acquire();
+        }
+        catch (InterruptedException e) {
+            lock.lock();
+            flag.set(true);
 
-        beforeRotation.accept(size, layer);
-        sequentialRotate(side, layer);
-        afterRotation.accept(size, layer);
+            if (amountRotating.decrementAndGet() == 0 && amountToExit.get() == 0) {
+                toEnter.signalAll();
+            }
+            else if (amountRotating.get() == 0 && amountToExit.get() > 0) {
+                toExit.signalAll();
+            }
 
-        layers[layerId].release();
-//        ochrona.acquire();
-//        isLayerRotating[layerId] = false;
-//
-//        if (layersWaitingToTurn[layerId] > 0) {
-//            layersWaitingToTurn[layerId]--;
-//            layers[layerId].release();
-//        }
-//        else {
-//            ochrona.release();
-//        }
+            lock.unlock();
+        }
 
+        if (!flag.get()) {
+            beforeRotation.accept(side, layer);
+            sequentialRotate(side, layer);
+            afterRotation.accept(side, layer);
+
+            layers[layerId].release();
+        }
+
+        flag.set(false);
     }
 
     public void printCube() {
         for (int i = 0; i < 6; i++) {
             for (int y = size - 1; y >= 0 ; y--) {
                 for (int x = 0; x < size; x++) {
-//                    System.out.printf("%d", cube[i][x][y]);
                     ColorPrinter.squareColorPrint(cube[i][x][y], cube[i][x][y]);
                 }
                 System.out.printf("\n");
@@ -394,7 +389,6 @@ public class Cube {
         for (int i = 0; i < 6; i++) {
             for (int y = size - 1; y >= 0 ; y--) {
                 for (int x = 0; x < size; x++) {
-//                    System.out.printf("%d", cube[i][x][y]);
                     ColorPrinter.cubeColorPrint(cube[i][x][y], cube[i][x][y]);
                 }
                 System.out.printf("\n");
