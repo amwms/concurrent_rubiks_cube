@@ -101,7 +101,7 @@ public class Cube {
 
             amountRotating.decrementAndGet();
             amountToExit.incrementAndGet();
-            while (amountRotating.get() > 0) { // while nie if
+            while (amountRotating.get() > 0) {
                 toExit.await();
             }
 
@@ -133,13 +133,9 @@ public class Cube {
             throw e;
         }
 
-        // System.out.println("bede krecil: " + side + " " + layer + " " + Thread.currentThread().getName() + " flag: " + flag.get());
-
         if (!flag.get()) {
             rotation(side, layer, flag);
         }
-
-        // System.out.println("juz nie: " + side + " " + layer + " " + Thread.currentThread().getName());
 
         exitProtocol(id);
     }
@@ -168,11 +164,8 @@ public class Cube {
             throw e;
         }
 
-        // System.out.println("bede krecil ale tak serio: " + side + " " + layer + " " + Thread.currentThread().getName() + " flag: " + flag.get());
-
         if (!flag.get()) {
             beforeRotation.accept(side, layer);
-//            sequentialRotate(side, layer);
             cube.sequentialRotate(side, layer);
             afterRotation.accept(side, layer);
 
@@ -197,7 +190,6 @@ public class Cube {
         for (int i = 0; i < 6; i++) {
             for (int y = size - 1; y >= 0 ; y--) {
                 for (int x = 0; x < size; x++) {
-//                    bob.append(cube[i][x][y]);
                     bob.append(cube.getCube(i, x, y));
                 }
             }
@@ -223,36 +215,4 @@ public class Cube {
         return bob.toString();
     }
 
-    public static void main(String[] args) {
-
-//        Cube cube = new Cube(3);
-//        cube.sequentialRotate(0, 2);
-//        cube.sequentialRotate(5, 0);
-//        cube.sequentialRotate(1, 1);
-//        cube.sequentialRotate(4, 1);
-//        Cube cube = new Cube(4);
-//        cube.sequentialRotate(2, 0);
-//        cube.sequentialRotate(5, 1);
-//        cube.printCube();
-//
-//        Cube cube2 = new Cube(4);
-//        cube2.rotate(2, 0);
-//        cube2.rotate(5, 1);
-//        Cube cube = new Cube(3);
-//
-//        cube.sequentialRotate(2, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(3, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(4, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(1, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(0, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(5, 0);
-
-//        cube.printCube();
-
-    }
 }

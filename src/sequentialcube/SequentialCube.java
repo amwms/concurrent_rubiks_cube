@@ -26,8 +26,8 @@ public class SequentialCube {
     private void turnFace(int id) {
         for (int i = 0; i < size / 2; i++) {
             for (int j = i; j < size - i - 1; j++) {
-
                 int temp = cube[id][i][j];
+
                 cube[id][i][j] = cube[id][size - 1 - j][i];
                 cube[id][size - 1 - j][i] = cube[id][size - 1 - i][size - 1 - j];
                 cube[id][size - 1 - i][size - 1 - j] = cube[id][j][size - 1 - i];
