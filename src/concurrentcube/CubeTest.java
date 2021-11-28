@@ -1,15 +1,24 @@
 package concurrentcube;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class CubeTest {
+
+    private Random randomizer;
+
+    @BeforeEach
+    public void initRandom() {
+        randomizer = new Random(2617);
+    }
 
     private Cube onlySizeCube(int size) {
         return new Cube(size, (x, y) -> {}, (x, y) -> {}, () -> {}, () -> {});
@@ -32,8 +41,7 @@ public class CubeTest {
     }
 
     private int random(int min, int max) {
-        max++;
-        return (int) ((Math.random() * (max - min)) + min);
+        return min + randomizer.nextInt(max - min + 1);
     }
 
     private int getSideGroup(int side) {
@@ -229,16 +237,15 @@ public class CubeTest {
         }
 
         String result1 = "202212202" + "111555111" + "525323525" + "333000333" + "040141040" + "454434454";
-        String result2 = "205202112" + "114115115" + "553225225" + "002333333" + "140040040" + "334454454";
-        String result3 = "202202511" + "554111111" + "322522555" + "033033233" + "041040040" + "433454454";
-        String result4 = "202202111" + "114115114" + "555222555" + "233033233" + "040040040" + "333454454";
-        String result5 = "205202112" + "114115115" + "553225225" + "002333333" + "140040040" + "334454454";
+        String result2 = "202112202" + "141151151" + "525523525" + "333002333" + "040140040" + "454334454";
+        String result3 = "202211202" + "111554111" + "525325525" + "303303323" + "040041040" + "454433454";
+        String result4 = "202111202" + "141151141" + "525525525" + "323303323" + "040040040" + "454333454";
 
         assertTrue(cube.cubeToString().equals(result1)
                 || cube.cubeToString().equals(result2)
                 || cube.cubeToString().equals(result3)
-                || cube.cubeToString().equals(result4)
-                || cube.cubeToString().equals(result5));
+                || cube.cubeToString().equals(result4));
+
         assertTrue(areCorrectColors(result[0], size));
     }
 
@@ -443,7 +450,7 @@ public class CubeTest {
                     try {
                         cube.rotate(side, layer);
                     } catch (InterruptedException e) {
-                        e.printStackTrace();
+                        fail();
                     }
                 }));
             }
