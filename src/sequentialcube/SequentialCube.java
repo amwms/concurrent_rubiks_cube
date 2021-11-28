@@ -2,8 +2,6 @@ package sequentialcube;
 
 import tools.ColorPrinter;
 
-import java.util.function.BiConsumer;
-
 public class SequentialCube {
     private int size;
     private int[][][] cube;
@@ -39,14 +37,14 @@ public class SequentialCube {
     }
 
     private int opositeFace(int id) {
-        return switch (id) {
-            case 0 -> 5;
-            case 1 -> 3;
-            case 2 -> 4;
-            case 3 -> 1;
-            case 4 -> 2;
-            default -> 0;
-        };
+        switch (id) {
+            case 0 : return 5;
+            case 1 : return  3;
+            case 2 : return 4;
+            case 3 : return  1;
+            case 4 : return  2;
+            default : return  0;
+        }
     }
 
     private int opositeLayer(int layer) {
@@ -173,12 +171,12 @@ public class SequentialCube {
 
     public void sequentialRotate(int side, int layer) {
         switch (side) {
-            case 0 -> faceZeroTurn(layer);
-            case 1 -> faceOneTurn(layer);
-            case 2 -> faceTwoTurn(layer);
-            case 3 -> faceThreeTurn(layer);
-            case 4 -> faceFourTurn(layer);
-            default -> faceFiveTurn(layer);
+            case 0 : faceZeroTurn(layer); break;
+            case 1 : faceOneTurn(layer); break;
+            case 2 : faceTwoTurn(layer); break;
+            case 3 : faceThreeTurn(layer); break;
+            case 4 : faceFourTurn(layer); break;
+            default : faceFiveTurn(layer); break;
         }
     }
 
@@ -212,30 +210,4 @@ public class SequentialCube {
         return cube[i][x][y];
     }
 
-    public static void main(String[] args) {
-//        Cube cube = new Cube(3);
-//        cube.sequentialRotate(0, 2);
-//        cube.sequentialRotate(5, 0);
-//        cube.sequentialRotate(1, 1);
-//        cube.sequentialRotate(4, 1);
-        SequentialCube cube = new SequentialCube(4);
-        cube.sequentialRotate(2, 0);
-        cube.sequentialRotate(5, 1);
-
-//        Cube cube = new Cube(3);
-//
-//        cube.sequentialRotate(2, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(3, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(4, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(1, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(0, 0);
-//        cube.printCube();
-//        cube.sequentialRotate(5, 0);
-
-        cube.printCube();
-    }
 }

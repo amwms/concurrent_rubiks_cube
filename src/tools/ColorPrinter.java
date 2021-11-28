@@ -23,27 +23,31 @@ public class ColorPrinter {
     }
 
     public static void cubeColorPrint(int number, int colorId) {
-        String color = switch (colorId) {
-            case 0 -> WHITE;
-            case 1 -> RED;
-            case 2 -> BLUE;
-            case 3 -> ORANGE;
-            case 4 -> GREEN;
-            default -> YELLOW;
-        };
+        String color;
+
+        switch (colorId) {
+            case 0 : color = WHITE; break;
+            case 1 : color = RED; break;
+            case 2 : color = BLUE; break;
+            case 3 : color = ORANGE; break;
+            case 4 : color = GREEN; break;
+            default : color = YELLOW; break;
+        }
 
         System.out.printf(color + "%d " + RESET, number);
     }
 
     public static void squareColorPrint(int number, int colorId) {
-        String color = switch (colorId) {
-            case 0 -> BACKGROUND_WHITE + WHITE;
-            case 1 -> BACKGROUND_RED + RED;
-            case 2 -> BACKGROUND_BLUE + BLUE;
-            case 3 -> BACKGROUND_ORANGE + ORANGE;
-            case 4 -> BACKGROUND_GREEN + "\u001b[38;5;34m";
-            default -> BACKGROUND_YELLOW + YELLOW;
-        };
+        String color;
+
+        switch (colorId) {
+            case 0 : color = BACKGROUND_WHITE + WHITE; break;
+            case 1 : color = BACKGROUND_RED + RED; break;
+            case 2 : color = BACKGROUND_BLUE + BLUE; break;
+            case 3 : color = BACKGROUND_ORANGE + ORANGE; break;
+            case 4 : color = BACKGROUND_GREEN + "\u001b[38;5;34m"; break;
+            default : color = BACKGROUND_YELLOW + YELLOW; break;
+        }
 
         System.out.printf(color + "%d " + RESET, number);
     }
