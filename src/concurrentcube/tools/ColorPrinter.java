@@ -1,4 +1,4 @@
-package tools;
+package concurrentcube.tools;
 
 public class ColorPrinter {
     public static final String RESET = "\u001B[0m";

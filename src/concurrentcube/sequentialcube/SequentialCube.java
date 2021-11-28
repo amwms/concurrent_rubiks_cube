@@ -1,6 +1,6 @@
-package sequentialcube;
+package concurrentcube.sequentialcube;
 
-import tools.ColorPrinter;
+import concurrentcube.tools.ColorPrinter;
 
 public class SequentialCube {
     private int size;

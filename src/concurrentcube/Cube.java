@@ -1,6 +1,6 @@
 package concurrentcube;
 
-import sequentialcube.SequentialCube;
+import concurrentcube.sequentialcube.SequentialCube;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
