@@ -20,16 +20,6 @@ public class SequentialCube {
         }
     }
 
-    public SequentialCube(int size,
-                BiConsumer<Integer, Integer> beforeRotation,
-                BiConsumer<Integer, Integer> afterRotation,
-                Runnable beforeShowing,
-                Runnable afterShowing) {
-
-        initCube(size);
-        this.size = size;
-    }
-
     public SequentialCube(int size) {
         initCube(size);
         this.size = size;
@@ -196,7 +186,6 @@ public class SequentialCube {
         for (int i = 0; i < 6; i++) {
             for (int y = size - 1; y >= 0 ; y--) {
                 for (int x = 0; x < size; x++) {
-//                    System.out.printf("%d", cube[i][x][y]);
                     ColorPrinter.squareColorPrint(cube[i][x][y], cube[i][x][y]);
                 }
                 System.out.printf("\n");
@@ -210,7 +199,6 @@ public class SequentialCube {
         for (int i = 0; i < 6; i++) {
             for (int y = size - 1; y >= 0 ; y--) {
                 for (int x = 0; x < size; x++) {
-//                    System.out.printf("%d", cube[i][x][y]);
                     ColorPrinter.cubeColorPrint(cube[i][x][y], cube[i][x][y]);
                 }
                 System.out.printf("\n");
@@ -218,6 +206,10 @@ public class SequentialCube {
             System.out.println("");
         }
         System.out.println("-----------------------------");
+    }
+
+    public int getCube(int i, int x, int y) {
+        return cube[i][x][y];
     }
 
     public static void main(String[] args) {

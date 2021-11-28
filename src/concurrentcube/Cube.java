@@ -1,5 +1,6 @@
 package concurrentcube;
 
+import sequentialcube.SequentialCube;
 import tools.ColorPrinter;
 
 import java.util.Arrays;
@@ -13,17 +14,10 @@ import java.util.function.BiConsumer;
 
 public class Cube {
     private final int size;
-    volatile private int[][][] cube;
+//    volatile private int[][][] cube;
+    private volatile SequentialCube cube;
 
-//    private Semaphore ochrona = new Semaphore(1, true);
-//    private Semaphore reprezentanci = new Semaphore(0, true); // jesli nie mozemy wejsc, to sie na nim ustawiamy
-//    private Semaphore[] pozostali = new Semaphore[4]; //binary_semaphore pozostali[N] = {0, ..., 0};
-//    private Semaphore doWyjscia = new Semaphore(0, true);
-//    private volatile int ileDoWyjscia = 0;
-//    private volatile int ileReprezentantow = 0;
-//    private volatile int[] ileZGrupy = new int[4]; //{0, ..., 0};
-//    private volatile int ktoOblicza = -1;
-//    private volatile int ileOblicza = 0;
+
     Lock lock = new ReentrantLock(true);
     Condition toExit = lock.newCondition();
     Condition toEnter = lock.newCondition();
@@ -32,28 +26,25 @@ public class Cube {
     private AtomicInteger amountToExit = new AtomicInteger(0);
     private AtomicInteger amountRotating = new AtomicInteger(0);
     private AtomicInteger whoIsRotating = new AtomicInteger(-1);
-//    private AtomicBoolean flag = new AtomicBoolean(false);
 
     private Semaphore[] layers;
-//    private volatile int[] layersWaitingToTurn;
-//    private volatile Boolean[] isLayerRotating;
 
     private BiConsumer<Integer, Integer> beforeRotation;
     private BiConsumer<Integer, Integer> afterRotation;
     private Runnable beforeShowing;
     private Runnable afterShowing;
 
-    void inintCube(int n) {
-        cube = new int[6][n][n];
-
-        for (int i = 0; i < 6; i++) {
-            for (int x = 0; x < n; x++) {
-                for (int y = 0; y < n; y++) {
-                    cube[i][x][y] = i;
-                }
-            }
-        }
-    }
+//    void inintCube(int n) {
+//        cube = new int[6][n][n];
+//
+//        for (int i = 0; i < 6; i++) {
+//            for (int x = 0; x < n; x++) {
+//                for (int y = 0; y < n; y++) {
+//                    cube[i][x][y] = i;
+//                }
+//            }
+//        }
+//    }
 
     void initSemaphores() {
 //        pozostali[0] = new Semaphore(0, true);
@@ -93,21 +84,22 @@ public class Cube {
         this.afterRotation = afterRotation;
         this.afterShowing = afterShowing;
 
-        inintCube(size);
+//        inintCube(size);
+        cube = new SequentialCube(size);
         this.size = size;
 
         initSemaphores();
         initArrays();
     }
 
-    public Cube(int size) {
-        inintCube(size);
-        this.size = size;
-
-        initSemaphores();
-        initArrays();
-    }
-
+//    public Cube(int size) {
+//        inintCube(size);
+//        this.size = size;
+//
+//        initSemaphores();
+//        initArrays();
+//    }
+/*
     private void turnFace(int id) {
         for (int i = 0; i < size / 2; i++) {
             for (int j = i; j < size - i - 1; j++) {
@@ -264,6 +256,22 @@ public class Cube {
             default -> faceFiveTurn(layer);
         }
     }
+*/
+
+    private int opositeFace(int id) {
+        return switch (id) {
+            case 0 -> 5;
+            case 1 -> 3;
+            case 2 -> 4;
+            case 3 -> 1;
+            case 4 -> 2;
+            default -> 0;
+        };
+    }
+
+    private int opositeLayer(int layer) {
+        return size - layer - 1;
+    }
 
 
     private int getGroup(int side) {
@@ -368,7 +376,8 @@ public class Cube {
 
         if (!flag.get()) {
             beforeRotation.accept(side, layer);
-            sequentialRotate(side, layer);
+//            sequentialRotate(side, layer);
+            cube.sequentialRotate(side, layer);
             afterRotation.accept(side, layer);
 
             layers[layerId].release();
@@ -376,29 +385,31 @@ public class Cube {
     }
 
     public void printCube() {
-        for (int i = 0; i < 6; i++) {
-            for (int y = size - 1; y >= 0 ; y--) {
-                for (int x = 0; x < size; x++) {
-                    ColorPrinter.squareColorPrint(cube[i][x][y], cube[i][x][y]);
-                }
-                System.out.printf("\n");
-            }
-            System.out.println("");
-        }
-        System.out.println("-----------------------------");
+        cube.printCube();
+//        for (int i = 0; i < 6; i++) {
+//            for (int y = size - 1; y >= 0 ; y--) {
+//                for (int x = 0; x < size; x++) {
+//                    ColorPrinter.squareColorPrint(cube[i][x][y], cube[i][x][y]);
+//                }
+//                System.out.printf("\n");
+//            }
+//            System.out.println("");
+//        }
+//        System.out.println("-----------------------------");
     }
 
     public void printNumberedCube() {
-        for (int i = 0; i < 6; i++) {
-            for (int y = size - 1; y >= 0 ; y--) {
-                for (int x = 0; x < size; x++) {
-                    ColorPrinter.cubeColorPrint(cube[i][x][y], cube[i][x][y]);
-                }
-                System.out.printf("\n");
-            }
-            System.out.println("");
-        }
-        System.out.println("-----------------------------");
+        cube.printNumberedCube();
+//        for (int i = 0; i < 6; i++) {
+//            for (int y = size - 1; y >= 0 ; y--) {
+//                for (int x = 0; x < size; x++) {
+//                    ColorPrinter.cubeColorPrint(cube[i][x][y], cube[i][x][y]);
+//                }
+//                System.out.printf("\n");
+//            }
+//            System.out.println("");
+//        }
+//        System.out.println("-----------------------------");
     }
 
     public String show() throws InterruptedException {
@@ -410,7 +421,8 @@ public class Cube {
         for (int i = 0; i < 6; i++) {
             for (int y = size - 1; y >= 0 ; y--) {
                 for (int x = 0; x < size; x++) {
-                    bob.append(cube[i][x][y]);
+//                    bob.append(cube[i][x][y]);
+                    bob.append(cube.getCube(i, x, y));
                 }
             }
         }
@@ -421,6 +433,22 @@ public class Cube {
 
         return bob.toString();
     }
+
+    // sequential cube to string
+    public String cubeToString() {
+        StringBuilder bob = new StringBuilder();
+        for (int i = 0; i < 6; i++) {
+            for (int y = size - 1; y >= 0 ; y--) {
+                for (int x = 0; x < size; x++) {
+//                    bob.append(cube[i][x][y]);
+                    bob.append(cube.getCube(i, x, y));
+                }
+            }
+        }
+
+        return bob.toString();
+    }
+
     public static void main(String[] args) {
 
 //        Cube cube = new Cube(3);
